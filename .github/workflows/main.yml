@@ -32,6 +32,12 @@ jobs:
       - name: Create RDP User with Numeric Password
         run: |
           $password = -join (1..6 | ForEach-Object { Get-Random -Minimum 0 -Maximum 10 })
+          
+          # تعطيل سياسة تعقيد الباسورد مؤقتاً في ويندوز عشان يقبل الباسورد البسيط
+          secedit /export /cfg C:\config.inf
+          (Get-Content C:\config.inf) -replace 'PasswordComplexity = 1', 'PasswordComplexity = 0' | Set-Content C:\config.inf
+          secedit /configure /db C:\sdb.sdb /cfg C:\config.inf /areas SECURITYPOLICY
+          
           $securePass = ConvertTo-SecureString $password -AsPlainText -Force
           New-LocalUser -Name "RDP" -Password $securePass -AccountNeverExpires
           Add-LocalGroupMember -Group "Administrators" -Member "RDP"
